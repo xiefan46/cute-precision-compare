@@ -34,7 +34,7 @@ struct FlashConfig {
   static constexpr int kHeadDim = kHeadDim_;
   static constexpr int BLOCK = BLOCK_;
 
-  using mma_op = SM80_16x8x16_F16F16F16F16_TN;
+  using mma_op = SM80_16x8x16_F32F16F16F32_TN;
   using mma_traits = MMA_Traits<mma_op>;
   using mma_atom = MMA_Atom<mma_traits>;
   static constexpr int kMmaEURepeatM = 1; // 4 -> 1
@@ -62,7 +62,7 @@ struct FlashConfig {
 
 
 template <typename config>
-__global__ void compute_kv_kernel_all_f16(const half_t* k, const half_t* v, half_t* kv_out, const int B, const int H, const int N)
+__global__ void compute_kv_kernel_f32_acc(const half_t* k, const half_t* v, float* kv_out, const int B, const int H, const int N)
 {
   using namespace cute;
   using TiledMMA = typename config::TiledMMA;
@@ -77,7 +77,7 @@ __global__ void compute_kv_kernel_all_f16(const half_t* k, const half_t* v, half
   const int bs_head_offset = bx * N * kHeadDim;
   const int num_block = (N + BLOCK - 1) / BLOCK;
 
-  __shared__ half_t smem_kv[kHeadDim * kHeadDim];
+  __shared__ float smem_kv[kHeadDim * kHeadDim];
   Tensor Kt = make_tensor(make_gmem_ptr<half_t>(k + bs_head_offset), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
   Tensor Vt = make_tensor(make_gmem_ptr<half_t>(v + bs_head_offset), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
 
@@ -114,7 +114,7 @@ __global__ void compute_kv_kernel_all_f16(const half_t* k, const half_t* v, half
 
     __syncthreads();
 
-    half_t one = half_t(1.0f);
+    float one = 1.0f;
 
     cute::axpby(one, tCrNewKV, one, tCsKV);
 
@@ -133,7 +133,7 @@ __global__ void compute_kv_kernel_all_f16(const half_t* k, const half_t* v, half
 }
 
 
-torch::Tensor cute_compute_kv_F16F16F16F16(torch::Tensor k, torch::Tensor v) {
+torch::Tensor cute_compute_kv_F32F16F16F32(torch::Tensor k, torch::Tensor v) {
     int B = k.size(0);
     int H = k.size(1);
     int N = k.size(2);
@@ -144,17 +144,17 @@ torch::Tensor cute_compute_kv_F16F16F16F16(torch::Tensor k, torch::Tensor v) {
 
     PRINT("num_block", num_block);
 
-    auto kv_out = torch::zeros({num_block, d, d}, torch::TensorOptions().dtype(torch::kFloat16).device(torch::Device(torch::kCUDA, 0)));
+    auto kv_out = torch::zeros({num_block, d, d}, torch::TensorOptions().dtype(torch::kFloat32).device(torch::Device(torch::kCUDA, 0)));
 
     // only for head_dim=64
     config::FlashConfig<cute::half_t> config;
     dim3 block = config.kThreadNum;
     dim3 grid(B * H);
-    auto partition_kernel = compute_kv_kernel_all_f16<decltype(config)>;
+    auto partition_kernel = compute_kv_kernel_f32_acc<decltype(config)>;
     PRINT("grid", grid);
     PRINT("block", block);
 
-    partition_kernel<<<grid, block>>>((cute::half_t*)k.data_ptr(), (cute::half_t*)v.data_ptr(), (cute::half_t*)kv_out.data_ptr(), B, H, N);
+    partition_kernel<<<grid, block>>>((cute::half_t*)k.data_ptr(), (cute::half_t*)v.data_ptr(), (float*)kv_out.data_ptr(), B, H, N);
     cudaDeviceSynchronize();
 
     return kv_out;
