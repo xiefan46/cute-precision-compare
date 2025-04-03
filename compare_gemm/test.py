@@ -66,8 +66,8 @@ if __name__ == "__main__":
     # NOTE: we only support d = 64!
     d = 64
 
-    k = torch.randn(d, d).cuda().half()
-    v = torch.randn(d, d).cuda().half()
+    k = torch.randn(2 * d, d).cuda().half()
+    v = torch.randn(2 * d, d).cuda().half()
 
     torch_kv = torch.matmul(k.transpose(-1, -2), v)
 
