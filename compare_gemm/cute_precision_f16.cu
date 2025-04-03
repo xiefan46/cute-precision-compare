@@ -82,11 +82,6 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out, co
     TiledMMA mma;
     ThrMMA thr_mma = mma.get_slice(tx);
 
-    if (thread0()) {
-        PRINT("mma size", size(mma));
-        PRINT("num_block", num_block);
-    }
-
 
     Tensor tAgKt = thr_mma.partition_A(gKt);
     Tensor tArKt = thr_mma.partition_fragment_A(gKt);
