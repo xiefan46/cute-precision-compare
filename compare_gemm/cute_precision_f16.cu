@@ -28,11 +28,10 @@ using namespace cute;
 namespace config {
 using namespace cute;
 
-template <typename T_, int kHeadDim_ = 64, int BLOCK_ = 64>
+template <typename T_, int kHeadDim_ = 64>
 struct FlashConfig {
   using T = T_;
   static constexpr int kHeadDim = kHeadDim_;
-  static constexpr int BLOCK = BLOCK_;
 
   using mma_op = SM80_16x8x16_F16F16F16F16_TN;
   using mma_traits = MMA_Traits<mma_op>;
