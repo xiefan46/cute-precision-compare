@@ -70,13 +70,7 @@ if __name__ == "__main__":
     k = torch.randn(N, d).cuda().half()
     v = torch.randn(N, d).cuda().half()
 
-    # torch_kv = torch.matmul(k.transpose(-1, -2), v)
-
-
     torch_kv = torch.matmul(k, v.transpose(-1, -2))
-
-
-
     cute_kv = myflash.cute_gemm(k, v)
 
     assert torch_kv.shape == (N, N)

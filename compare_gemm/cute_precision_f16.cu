@@ -110,7 +110,7 @@ torch::Tensor cute_gemm(torch::Tensor k, torch::Tensor v) {
 
     PRINT("num_block", num_block);
 
-    auto kv_out = torch::zeros({d, d}, torch::TensorOptions().dtype(torch::kFloat16).device(torch::Device(torch::kCUDA, 0)));
+    auto kv_out = torch::zeros({N, N}, torch::TensorOptions().dtype(torch::kFloat16).device(torch::Device(torch::kCUDA, 0)));
 
     // only for head_dim=64
     config::FlashConfig<cute::half_t> config;
