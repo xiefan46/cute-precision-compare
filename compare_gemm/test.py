@@ -63,11 +63,12 @@ if __name__ == "__main__":
 
     set_seed(10086)
 
-    # NOTE: we only support d = 64!
+    # NOTE: remember to change c++ template if you want to change N and d
+    N = 256
     d = 64
 
-    k = torch.randn(2 * d, d).cuda().half()
-    v = torch.randn(2 * d, d).cuda().half()
+    k = torch.randn(N, d).cuda().half()
+    v = torch.randn(N, d).cuda().half()
 
     torch_kv = torch.matmul(k.transpose(-1, -2), v)
 

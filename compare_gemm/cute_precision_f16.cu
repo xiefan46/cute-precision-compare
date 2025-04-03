@@ -28,10 +28,11 @@ using namespace cute;
 namespace config {
 using namespace cute;
 
-template <typename T_, int kHeadDim_ = 64>
+template <typename T_, int kHeadDim_ = 64, N_ = 256>
 struct FlashConfig {
   using T = T_;
   static constexpr int kHeadDim = kHeadDim_;
+  static constexpr int N = N_;
 
   using mma_op = SM80_16x8x16_F16F16F16F16_TN;
   using mma_traits = MMA_Traits<mma_op>;
@@ -67,12 +68,13 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
     using TiledMMA = typename config::TiledMMA;
 
     constexpr int kHeadDim = config::kHeadDim;
+    constexpr int N = config::N;
 
     const int bx = blockIdx.x;
     const int tx = threadIdx.x;
 
-    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<2 * kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
-    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<2 * kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
     Tensor gKV = make_tensor(make_gmem_ptr<half_t>(kv_out),
                              make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // d x d
 
