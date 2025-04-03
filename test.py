@@ -73,7 +73,7 @@ def test_kv_match_cute_f16_torch_f16(k, v, myflash):
 
         print(f"✅ block : {i}, kv results match")
 
-    print("✅ kv results match")
+    print("✅ ✅  kv results match")
 
 
 def test_kv_match_cute_F32F16F16F32_torch_f16(k, v, myflash):
@@ -124,7 +124,7 @@ def test_kv_match_cute_F32F16F16F32_torch_f16(k, v, myflash):
 
         print(f"✅ block : {i}, kv results match")
 
-    print("✅ kv results match")
+    print("✅ ✅  kv results match")
 
 
 def test_kv_match_cute_F32F16F16F32_torch_f32(k, v, myflash):
@@ -174,7 +174,7 @@ def test_kv_match_cute_F32F16F16F32_torch_f32(k, v, myflash):
 
         print(f"✅ block : {i}, kv results match")
 
-    print("✅ kv results match")
+    print("✅ ✅  kv results match")
 
 
 if __name__ == "__main__":
@@ -236,8 +236,8 @@ if __name__ == "__main__":
     # test_kv_match_cute_f16_torch_f16(k1, v1, myflash)
 
     # case2 cute F32F16F16F32, torch F16 matmul, then convert to F32 to accumulate，not match!
-    test_kv_match_cute_F32F16F16F32_torch_f16(k1, v1, myflash)
+    # test_kv_match_cute_F32F16F16F32_torch_f16(k1, v1, myflash)
 
 
     # case3 cute F32F16F16F32, torch all f32, match
-    # test_kv_match_cute_F32F16F16F32_torch_f32(k1, v1, myflash)
+    test_kv_match_cute_F32F16F16F32_torch_f32(k1, v1, myflash)
