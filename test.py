@@ -5,51 +5,6 @@ import random
 import numpy as np
 from torch.cuda.amp import autocast, GradScaler
 
-# def torch_compute_kv(k, v, BLOCK = 64):
-#     B, H, N, d = k.shape
-#     NUM_BLOCK = (N + BLOCK - 1) // BLOCK
-#
-#     kv = torch.zeros(d, d).to(torch.float32).to(q.device)
-#     kv_output = torch.zeros(NUM_BLOCK, d, d).to(torch.float32).to(q.device)
-#
-#     for i in range(NUM_BLOCK):
-#         si = i * BLOCK
-#         ei = min(si + BLOCK, N)
-#         ki = k[:, :, si:ei].contiguous().to(torch.float32)
-#         vi = v[:, :, si:ei].contiguous().to(torch.float32)
-#
-#         new_kv = torch.matmul(ki.transpose(-1, -2), vi).to(torch.float32)
-#         kv = kv + new_kv
-#         kv_output[i] = kv.detach().clone()
-#         print(f"data types.ki : {ki.dtype}, vi : {vi.dtype},  new_kv: {new_kv.dtype}, kv: {kv.dtype}")
-#     return kv_output
-#
-# def torch_compute_amp(k, v, BLOCK = 64):
-#
-#     assert k.dtype == torch.float16
-#     assert v.dtype == torch.float16
-#
-#     B, H, N, d = k.shape
-#     NUM_BLOCK = (N + BLOCK - 1) // BLOCK
-#
-#     kv = torch.zeros(d, d).to(torch.float32).to(q.device)
-#     kv_output = torch.zeros(NUM_BLOCK, d, d).to(torch.float32).to(q.device)
-#
-#     for i in range(NUM_BLOCK):
-#         si = i * BLOCK
-#         ei = min(si + BLOCK, N)
-#         ki = k[:, :, si:ei].contiguous()
-#         vi = v[:, :, si:ei].contiguous()
-#         with autocast():
-#             new_kv = torch.matmul(ki.transpose(-1, -2), vi)
-#         new_kv = new_kv.to(torch.float32)
-#         kv = kv + new_kv
-#         kv_output[i] = kv.detach().clone()
-#         print(f"data types.ki : {ki.dtype}, vi : {vi.dtype},  new_kv: {new_kv.dtype}, kv: {kv.dtype}")
-#     return kv_output
-
-
-
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -93,7 +48,7 @@ def test_kv_match_f16(k, v, myflash):
         return kv_output
 
     torch_kv_output = torch_compute_kv_f16(k, v)
-    cute_kv_output = myflash.cute_compute_kv_F16F16F16F16(k, v).to(torch.float32)
+    cute_kv_output = myflash.cute_compute_kv_F16F16F16F16(k, v)
 
     assert torch_kv_output.dtype == torch.float16
     assert cute_kv_output.dtype == torch.float16
@@ -110,17 +65,11 @@ def test_kv_match_f16(k, v, myflash):
 
         print(f"block: {i}, torch_kv_output: {torch_kv_output[i]}, cute_kv_output: {cute_kv_output[i]}")
 
-        # torch.testing.assert_close(
-        #     torch_kv_output[i],
-        #     cute_kv_output[i],
-        #     rtol=1e-3,
-        #     atol=1e-5,
-        #     msg=f"block : {i}, KV results are different.torch_kv_output: {torch_kv_output[i]}. cute_kv_output: {cute_kv_output[i]}",
-        # )
-
         torch.testing.assert_close(
             torch_kv_output[i],
             cute_kv_output[i],
+            rtol=1e-3,
+            atol=1e-5,
         )
 
         print(f"✅ block : {i}, kv results match")
