@@ -59,7 +59,18 @@ struct FlashConfig {
 }  // namespace config
 
 
-
+template<typename Tensor>
+__forceinline__ __device__ auto fp32_to_fp16(Tensor& src_fp32) {
+    using namespace cute;
+    auto dest_fp16 = make_tensor_like<half_t>(src_fp32);
+    auto src_fp32x2 = recast<float2>(src_fp32);
+    auto dest_fp16x2 = recast<half2>(dest_fp16);
+#pragma unroll
+    for (int si = 0; si < size(dest_fp16x2); si++) {
+        dest_fp16x2(si) = __float22half2_rn(src_fp32x2(si));
+    }
+    return dest_fp16;
+}
 
 template <typename config>
 __global__ void compute_kv_kernel_f32_acc(const half_t* k, const half_t* v, float* kv_out, const int B, const int H, const int N)
@@ -112,9 +123,12 @@ __global__ void compute_kv_kernel_f32_acc(const half_t* k, const half_t* v, floa
     clear(tCrNewKV);
     cute::gemm(mma, tArKt, tBrVt, tCrNewKV);
 
+
+    tCrNewKV_f16 = fp32_to_fp16(tCrNewKV);
+
     float one = 1.0f;
 
-    cute::axpby(one, tCrNewKV, one, tCsKV);
+    cute::axpby(one, tCrNewKV_f16, one, tCsKV);
 
     __syncthreads();
 
