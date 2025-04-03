@@ -62,20 +62,18 @@ struct FlashConfig {
 
 
 template <typename config>
-__global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out, const int N)
+__global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
 {
     using namespace cute;
     using TiledMMA = typename config::TiledMMA;
 
-
-    constexpr int BLOCK = config::BLOCK;
     constexpr int kHeadDim = config::kHeadDim;
 
     const int bx = blockIdx.x;
     const int tx = threadIdx.x;
 
-    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
-    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
     Tensor gKV = make_tensor(make_gmem_ptr<half_t>(kv_out),
                              make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // d x d
 
@@ -121,7 +119,7 @@ torch::Tensor cute_gemm(torch::Tensor k, torch::Tensor v) {
     PRINT("grid", grid);
     PRINT("block", block);
 
-    kernel<<<grid, block>>>((cute::half_t*) k.data_ptr(), (cute::half_t*)v.data_ptr(), (cute::half_t*)kv_out.data_ptr(),  N);
+    kernel<<<grid, block>>>((cute::half_t*) k.data_ptr(), (cute::half_t*)v.data_ptr(), (cute::half_t*)kv_out.data_ptr());
     cudaDeviceSynchronize();
 
     return kv_out;

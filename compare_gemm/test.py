@@ -63,12 +63,11 @@ if __name__ == "__main__":
 
     set_seed(10086)
 
-    N = 128
     # NOTE: we only support d = 64!
     d = 64
 
-    k = torch.randn(N, d).cuda().half()
-    v = torch.randn(N, d).cuda().half()
+    k = torch.randn(d, d).cuda().half()
+    v = torch.randn(d, d).cuda().half()
 
     torch_kv = torch.matmul(k.transpose(-1, -2), v)
 
