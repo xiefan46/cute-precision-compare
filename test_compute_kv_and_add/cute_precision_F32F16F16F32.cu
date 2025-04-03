@@ -124,7 +124,7 @@ __global__ void compute_kv_kernel_f32_acc(const half_t* k, const half_t* v, floa
     cute::gemm(mma, tArKt, tBrVt, tCrNewKV);
 
 
-    tCrNewKV_f16 = fp32_to_fp16(tCrNewKV);
+    Tensor tCrNewKV_f16 = fp32_to_fp16(tCrNewKV);
 
     float one = 1.0f;
 
