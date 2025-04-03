@@ -27,15 +27,18 @@ def set_seed(seed=42):
 
 
 def test_kv_match_f16(k, v, myflash):
+    assert k.dtype == torch.float16
+    assert v.dtype == torch.float16
+    BLOCK = 64
+    B, H, N, d = k.shape
+    num_block = (N + BLOCK - 1) // BLOCK
 
-    def torch_compute_kv_f16(k, v, BLOCK = 64):
-        B, H, N, d = k.shape
-        NUM_BLOCK = (N + BLOCK - 1) // BLOCK
+    def torch_compute_kv_f16():
 
         kv = torch.zeros(d, d).to(torch.float16).to(q.device)
-        kv_output = torch.zeros(NUM_BLOCK, d, d).to(torch.float16).to(q.device)
+        kv_output = torch.zeros(num_block, d, d).to(torch.float16).to(q.device)
 
-        for i in range(NUM_BLOCK):
+        for i in range(num_block):
             si = i * BLOCK
             ei = min(si + BLOCK, N)
             ki = k[:, :, si:ei].contiguous()
@@ -44,18 +47,14 @@ def test_kv_match_f16(k, v, myflash):
             new_kv = torch.matmul(ki.transpose(-1, -2), vi)
             kv = kv + new_kv
             kv_output[i] = kv.detach().clone()
-            print(f"data types. ki : {ki.dtype}, vi : {vi.dtype},  new_kv: {new_kv.dtype}, kv: {kv.dtype}")
+            # print(f"data types. ki : {ki.dtype}, vi : {vi.dtype},  new_kv: {new_kv.dtype}, kv: {kv.dtype}")
         return kv_output
 
-    torch_kv_output = torch_compute_kv_f16(k, v)
+    torch_kv_output = torch_compute_kv_f16()
     cute_kv_output = myflash.cute_compute_kv_F16F16F16F16(k, v)
 
     assert torch_kv_output.dtype == torch.float16
     assert cute_kv_output.dtype == torch.float16
-
-    BLOCK = 64
-    B, H, N, d = k.shape
-    num_block = (N + BLOCK - 1) // BLOCK
 
     print(f"test_kv_match. num_block : {num_block}")
 
