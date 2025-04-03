@@ -83,6 +83,7 @@ def test_kv_match_cute_F32F16F16F32_torch_f16(k, v, myflash):
     B, H, N, d = k.shape
     num_block = (N + BLOCK - 1) // BLOCK
 
+
     def torch_compute_kv_f32_acc():
 
         kv = torch.zeros(d, d).to(torch.float32).to(q.device)
@@ -226,6 +227,10 @@ if __name__ == "__main__":
     q1 = q.transpose(1, 2).contiguous()
     k1 = k.transpose(1, 2).contiguous()
     v1 = v.transpose(1, 2).contiguous()
+
+    # This test only support B=1 and H=1 and d==64
+    assert B == 1 and H == 1 and d == 64
+
 
     # case1: cute F16F16F16F16, torch all F16, not match！
     # test_kv_match_cute_f16_torch_f16(k1, v1, myflash)
