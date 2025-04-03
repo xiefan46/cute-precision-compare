@@ -76,16 +76,16 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
     Tensor gK = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x d
     Tensor gV = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x d
     Tensor gKV = make_tensor(make_gmem_ptr<half_t>(kv_out),
-                             make_shape(Int<N>{}, Int<N>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x N
+                             make_shape(Int<N>{}, Int<N>{}), make_stride(Int<N>{}, Int<1>{})); // N x N
 
     TiledMMA mma;
     ThrMMA thr_mma = mma.get_slice(tx);
 
 
-    Tensor tAgKt = thr_mma.partition_A(gK);
-    Tensor tArKt = thr_mma.partition_fragment_A(gK);
-    Tensor tBgVt = thr_mma.partition_B(gV);
-    Tensor tBrVt = thr_mma.partition_fragment_B(gV);
+    Tensor tAgK = thr_mma.partition_A(gK);
+    Tensor tArK = thr_mma.partition_fragment_A(gK);
+    Tensor tBgV = thr_mma.partition_B(gV);
+    Tensor tBrV = thr_mma.partition_fragment_B(gV);
 
     cute::copy(tAgKt, tArKt);
     cute::copy(tBgVt, tBrVt);
@@ -95,7 +95,7 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
     clear(tCrKV);
 
     __syncthreads();
-    cute::gemm(mma, tArKt, tBrVt, tCrKV);
+    cute::gemm(mma, tArK, tBrV, tCrKV);
     __syncthreads();
     cute::copy(tCrKV, tCgKV);
 }
