@@ -28,7 +28,7 @@ using namespace cute;
 namespace config {
 using namespace cute;
 
-template <typename T_, int kHeadDim_ = 64, int N_ = 256>
+template <typename T_, int kHeadDim_ = 64, int N_ = 128>
 struct FlashConfig {
   using T = T_;
   static constexpr int kHeadDim = kHeadDim_;
@@ -73,19 +73,19 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
     const int bx = blockIdx.x;
     const int tx = threadIdx.x;
 
-    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
-    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gK = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x d
+    Tensor gV = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<N>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x d
     Tensor gKV = make_tensor(make_gmem_ptr<half_t>(kv_out),
-                             make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // d x d
+                             make_shape(Int<N>{}, Int<N>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // N x N
 
     TiledMMA mma;
     ThrMMA thr_mma = mma.get_slice(tx);
 
 
-    Tensor tAgKt = thr_mma.partition_A(gKt);
-    Tensor tArKt = thr_mma.partition_fragment_A(gKt);
-    Tensor tBgVt = thr_mma.partition_B(gVt);
-    Tensor tBrVt = thr_mma.partition_fragment_B(gVt);
+    Tensor tAgKt = thr_mma.partition_A(gK);
+    Tensor tArKt = thr_mma.partition_fragment_A(gK);
+    Tensor tBgVt = thr_mma.partition_B(gV);
+    Tensor tBrVt = thr_mma.partition_fragment_B(gV);
 
     cute::copy(tAgKt, tArKt);
     cute::copy(tBgVt, tBrVt);

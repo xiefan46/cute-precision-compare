@@ -64,7 +64,7 @@ if __name__ == "__main__":
     set_seed(10086)
 
     # NOTE: remember to change c++ template if you want to change N and d
-    N = 256
+    N = 128
     d = 64
 
     k = torch.randn(N, d).cuda().half()
