@@ -87,8 +87,8 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out)
     Tensor tBgV = thr_mma.partition_B(gV);
     Tensor tBrV = thr_mma.partition_fragment_B(gV);
 
-    cute::copy(tAgKt, tArKt);
-    cute::copy(tBgVt, tBrVt);
+    cute::copy(tAgK, tArK);
+    cute::copy(tBgV, tBrV);
 
     Tensor tCgKV = thr_mma.partition_C(gKV);
     Tensor tCrKV = thr_mma.partition_fragment_C(gKV);
