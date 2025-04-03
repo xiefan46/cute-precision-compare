@@ -28,7 +28,7 @@ using namespace cute;
 namespace config {
 using namespace cute;
 
-template <typename T_, int kHeadDim_ = 64, N_ = 256>
+template <typename T_, int kHeadDim_ = 64, int N_ = 256>
 struct FlashConfig {
   using T = T_;
   static constexpr int kHeadDim = kHeadDim_;
