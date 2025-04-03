@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     set_seed(10086)
 
-    N = 512
+    N = 128
     # NOTE: we only support d = 64!
     d = 64
 

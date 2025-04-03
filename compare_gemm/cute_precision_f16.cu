@@ -74,8 +74,8 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out, co
     const int bx = blockIdx.x;
     const int tx = threadIdx.x;
 
-    Tensor Kt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
-    Tensor Vt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gKt = make_tensor(make_gmem_ptr<half_t>(k), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
+    Tensor gVt = make_tensor(make_gmem_ptr<half_t>(v), make_shape(Int<kHeadDim>{}, N), make_stride(Int<1>{}, Int<kHeadDim>{})); // d x N
     Tensor gKV = make_tensor(make_gmem_ptr<half_t>(kv_out),
                              make_shape(Int<kHeadDim>{}, Int<kHeadDim>{}), make_stride(Int<kHeadDim>{}, Int<1>{})); // d x d
 
@@ -87,9 +87,6 @@ __global__ void gemm_kernel(const half_t* k, const half_t* v, half_t* kv_out, co
         PRINT("num_block", num_block);
     }
 
-
-    Tensor gKt = local_tile(Kt, make_tile(Int<kHeadDim>{}, Int<BLOCK>{}), make_coord(0, block_id)); // d x BLOCK
-    Tensor gVt = local_tile(Vt, make_tile(Int<kHeadDim>{}, Int<BLOCK>{}), make_coord(0, block_id)); //d x BLOCK
 
     Tensor tAgKt = thr_mma.partition_A(gKt);
     Tensor tArKt = thr_mma.partition_fragment_A(gKt);
