@@ -336,7 +336,7 @@ if __name__ == "__main__":
 
 
     # case1: cute F16F16F16F16, torch all F16, not match！
-    test_kv_match_cute_f16_torch_f16(k1, v1, myflash)
+    # test_kv_match_cute_f16_torch_f16(k1, v1, myflash)
 
     # case2 cute F32F16F16F32, torch F16 matmul, then convert to F32 to accumulate，not match!
     # test_kv_match_cute_F32F16F16F32_torch_f16(k1, v1, myflash)
@@ -350,5 +350,5 @@ if __name__ == "__main__":
     # test_kv_match_cute_F32F16F16F32_torch_f16_amp(k1, v1, myflash)
 
 
-    # cace5 cute F16F16F16F16, torch all F16, disable amp explicitly
+    # cace5 cute F16F16F16F16, torch all F16, disable amp explicitly, not match
     test_kv_match_cute_f16_torch_f16_disable_amp(k1, v1, myflash)
