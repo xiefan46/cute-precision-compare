@@ -26,6 +26,56 @@ def set_seed(seed=42):
     os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
 
 
+def compare_acc_f16(myflash):
+    set_seed(10086)
+
+    # NOTE: remember to change c++ template if you want to change N and d
+    N = 128
+    d = 64
+
+    k = torch.randn(N, d).cuda().half()
+    v = torch.randn(N, d).cuda().half()
+
+    torch_kv = torch.matmul(k, v.transpose(-1, -2))
+    cute_kv = myflash.cute_gemm(k, v)
+
+    assert torch_kv.shape == (N, N)
+    assert cute_kv.shape == (N, N)
+
+    torch.testing.assert_close(
+        torch_kv,
+        cute_kv,
+        rtol=1e-3,
+        atol=1e-5,
+    )
+    print("✅ ✅  acc results match")
+
+
+def compare_acc_f32(myflash):
+    set_seed(10086)
+
+    # NOTE: remember to change c++ template if you want to change N and d
+    N = 128
+    d = 64
+
+    k = torch.randn(N, d).cuda().half()
+    v = torch.randn(N, d).cuda().half()
+
+    torch_kv = torch.matmul(k, v.transpose(-1, -2))
+    cute_kv = myflash.cute_gemm_f32_acc(k, v)
+
+    assert torch_kv.shape == (N, N)
+    assert cute_kv.shape == (N, N)
+
+    torch.testing.assert_close(
+        torch_kv,
+        cute_kv,
+        rtol=1e-3,
+        atol=1e-5,
+    )
+    print("✅ ✅  acc results match")
+
+
 if __name__ == "__main__":
 
     os.environ['TORCH_CUDA_ARCH_LIST'] = '8.0'
@@ -49,6 +99,7 @@ if __name__ == "__main__":
                    sources=[
                        'main.cpp',
                        'cute_precision_f16.cu',
+                       'cute_precision_acc_f32.cu',
                    ],
                    extra_cuda_cflags=[
                        '-O2',
@@ -61,24 +112,5 @@ if __name__ == "__main__":
                    )
 
 
-    set_seed(10086)
+    compare_acc_f32(myflash)
 
-    # NOTE: remember to change c++ template if you want to change N and d
-    N = 128
-    d = 64
-
-    k = torch.randn(N, d).cuda().half()
-    v = torch.randn(N, d).cuda().half()
-
-    torch_kv = torch.matmul(k, v.transpose(-1, -2))
-    cute_kv = myflash.cute_gemm(k, v)
-
-    assert torch_kv.shape == (N, N)
-    assert cute_kv.shape == (N, N)
-
-    torch.testing.assert_close(
-        torch_kv,
-        cute_kv,
-        rtol=1e-3,
-        atol=1e-5,
-    )
